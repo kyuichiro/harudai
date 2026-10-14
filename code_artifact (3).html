@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT活用・生産性向上に向けた自社課題診断チェックシート</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* スムーズスクロール */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* 印刷/PDF保存用スタイル */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #111827 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-break-inside-avoid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+        box-shadow: none !important;
+        border: 1px solid #e5e7eb !important;
+      }
+    }
+
+    /* カスタムラジオボタンのアニメーション */
+    .option-btn {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 no-print transition-all">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-brand-600 text-white p-2 rounded-xl flex items-center justify-center shadow-md shadow-brand-500/20">
+          <i data-lucide="activity" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="text-xs font-bold tracking-wider uppercase text-brand-600 block">Antigravity DX Diagnostic</span>
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">自社課題診断チェックシート</h1>
+        </div>
+      </div>
+
+      <!-- クイックアクションボタン -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="btn-demo" class="px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition">
+          <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+          <span class="hidden sm:inline">デモ用</span>自動入力
+        </button>
+        <button id="btn-reset" class="px-3 py-1.5 text-xs sm:text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-1.5 transition">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          リセット
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 進捗スティッキーバー -->
+  <div class="sticky top-16 z-30 bg-slate-900 text-white shadow-md no-print border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2 text-xs sm:text-sm font-medium">
+        <i data-lucide="list-checks" class="w-4 h-4 text-brand-500"></i>
+        <span>回答進捗:</span>
+        <span id="progress-text" class="font-bold text-brand-100">0 / 20 完了 (0%)</span>
+      </div>
+
+      <div class="flex-1 max-w-xs sm:max-w-md w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+        <div id="progress-bar" class="bg-gradient-to-r from-brand-500 to-emerald-400 h-2.5 rounded-full transition-all duration-300 w-0"></div>
+      </div>
+
+      <div>
+        <a href="#results-section" id="btn-jump-result" class="text-xs text-brand-100 hover:text-white flex items-center gap-1 font-medium transition opacity-60 pointer-events-none">
+          <span>診断結果を見る</span>
+          <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    
+    <!-- イントロダクション -->
+    <section class="bg-gradient-to-br from-slate-900 via-brand-900 to-slate-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10 max-w-3xl space-y-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-500/20 text-brand-300 border border-brand-500/30 rounded-full text-xs font-semibold">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+          <span>脱・気合と根性から「仕組み化」へのシフト</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-snug">
+          IT活用・生産性向上に向けた<br class="hidden sm:inline">自社課題診断チェックシート
+        </h2>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+          長時間の残業や個人の頑張りだけで業務を回していませんか？<br class="hidden sm:inline">
+          5つの視点（全20問）から現場の業務ボトルネックを可視化し、客観的なスコアリングと具体的な改善ロードマップを提示します。
+        </p>
+        <div class="pt-2 flex flex-wrap gap-4 text-xs text-slate-300 border-t border-slate-700/60 mt-4">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="clock" class="w-4 h-4 text-brand-400"></i>
+            所要時間: 約3〜5分
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            データ保存: 端末内ローカル完結（安全）
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="printer" class="w-4 h-4 text-sky-400"></i>
+            診断後にPDF印刷可能
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 診断設問セクション -->
+    <section id="questionnaire-section" class="space-y-8">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">診断項目（全5カテゴリー・20問）</h3>
+          <p class="text-sm text-slate-500 mt-1">現在の職場の実態に最も当てはまる評価を選択してください。</p>
+        </div>
+        <span class="text-xs bg-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-md">3段階評価</span>
+      </div>
+
+      <!-- 質問リスト（JSで自動生成） -->
+      <div id="questions-container" class="space-y-8"></div>
+
+      <!-- 診断ボタンエリア -->
+      <div class="text-center py-6 no-print">
+        <button id="btn-submit" class="w-full sm:w-auto px-10 py-4 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold rounded-2xl shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 mx-auto transition-all text-base">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          <span>診断結果を算出・可視化する</span>
+        </button>
+        <p id="submit-hint" class="text-xs text-slate-500 mt-2">※ すべての設問に回答していなくても途中スコアを集計可能です。</p>
+      </div>
+    </section>
+
+    <!-- 診断結果表示エリア -->
+    <section id="results-section" class="pt-6 border-t-2 border-slate-200 space-y-8 scroll-mt-24">
+      
+      <!-- 結果ヘッダー -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 uppercase tracking-wider mb-1">
+            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+            Diagnostic Report
+          </div>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900">診断結果ダッシュボード</h3>
+        </div>
+
+        <div class="flex items-center gap-2 no-print">
+          <button id="btn-print" class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-medium rounded-xl text-sm flex items-center gap-2 shadow-sm transition">
+            <i data-lucide="printer" class="w-4 h-4 text-slate-500"></i>
+            レポート印刷 / PDF保存
+          </button>
+        </div>
+      </div>
+
+      <!-- スコアサマリーカード & レーダーチャート -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左側：総合スコア & 判定 -->
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between print-break-inside-avoid">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-500 tracking-wider">総合生産性スコア</span>
+              <span id="rank-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+                未回答
+              </span>
+            </div>
+
+            <div class="flex items-baseline gap-2">
+              <span id="total-score" class="text-5xl sm:text-6xl font-black text-slate-900 tracking-tight">0</span>
+              <span class="text-lg font-bold text-slate-400">/ 100 点</span>
+            </div>
+
+            <!-- ランク解説 -->
+            <div id="rank-card" class="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all">
+              <h4 id="rank-title" class="font-bold text-base text-slate-800 flex items-center gap-2">
+                <i data-lucide="help-circle" class="w-5 h-5 text-slate-400"></i>
+                設問に回答してください
+              </h4>
+              <p id="rank-desc" class="text-sm text-slate-600 mt-2 leading-relaxed">
+                上のチェックシートを選択すると、あなたの組織の「仕組み化レベル」と現在位置がリアルタイムに判定されます。
+              </p>
+            </div>
+          </div>
+
+          <!-- ランク基準表ミニ -->
+          <div class="mt-6 pt-5 border-t border-slate-100 text-xs space-y-1.5 text-slate-500">
+            <div class="font-semibold text-slate-700 mb-2">【判定基準（100点換算）】</div>
+            <div class="flex justify-between items-center py-0.5"><span class="font-medium text-emerald-700">Sランク (85〜100点):</span> <span>先進的「仕組み化」推進組織</span></div>
+            <div class="flex justify-between items-center py-0.5"><span class="font-medium text-blue-700">Aランク (70〜84点):</span> <span>脱・根性論の標準組織</span></div>
+            <div class="flex justify-between items-center py-0.5"><span class="font-medium text-amber-700">Bランク (50〜69点):</span> <span>気合と根性の限界警戒領域</span></div>
+            <div class="flex justify-between items-center py-0.5"><span class="font-medium text-rose-700">Cランク (0〜49点):</span> <span>精神論依存の緊急改善エリア</span></div>
+          </div>
+        </div>
+
+        <!-- 右側：レーダーチャート -->
+        <div class="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col items-center justify-center print-break-inside-avoid">
+          <div class="w-full flex items-center justify-between mb-2">
+            <h4 class="font-bold text-slate-900 text-base flex items-center gap-2">
+              <i data-lucide="compass" class="w-5 h-5 text-brand-600"></i>
+              カテゴリー別 達成度バランス
+            </h4>
+            <span class="text-xs text-slate-400">各カテゴリー満点=100%</span>
+          </div>
+
+          <div class="relative w-full max-w-md aspect-square flex items-center justify-center">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ボトルネック抽出セクション -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm print-break-inside-avoid">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <div class="p-2 bg-rose-100 text-rose-600 rounded-xl">
+              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="text-lg font-bold text-slate-900">特定された業務ボトルネック</h4>
+              <p class="text-xs text-slate-500">「できていない（0点）」と判定された最優先改善項目です。</p>
+            </div>
+          </div>
+          <span id="bottleneck-count" class="px-2.5 py-1 bg-rose-50 text-rose-700 font-bold text-xs rounded-full border border-rose-200">
+            0 項目
+          </span>
+        </div>
+
+        <div id="bottleneck-list" class="space-y-3">
+          <div class="text-center py-8 text-slate-400 text-sm">
+            回答を入力すると、ボトルネックとなっている項目がここに抽出されます。
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Action Roadmap 提案 -->
+      <div class="bg-gradient-to-br from-slate-900 to-brand-900 text-white rounded-3xl p-6 sm:p-8 shadow-lg print-break-inside-avoid">
+        <div class="max-w-2xl mb-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-emerald-300 rounded-full text-xs font-semibold mb-2">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+            セミナー連動アクション
+          </div>
+          <h4 class="text-xl sm:text-2xl font-bold">生産性向上 3ステップ・ロードマップ</h4>
+          <p class="text-sm text-slate-300 mt-1">
+            無理な一斉刷新ではなく、段階的な3ステップで「仕組み化」を定着させます。
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          
+          <!-- Step 1 -->
+          <div class="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-5 hover:bg-white/15 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold tracking-wider px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">STEP 1</span>
+                <i data-lucide="layout-grid" class="w-5 h-5 text-emerald-400"></i>
+              </div>
+              <h5 class="text-base font-bold text-white">業務の見える化</h5>
+              <p class="text-xs font-medium text-emerald-300">カンバンボードによる脱・属人化</p>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                誰が何を抱えているかをクラウドボード上に集約。「頭の中」のタスクを外に出し、チームで優先順位を共有します。
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300 flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+              推奨: Notion, Trello, Asana等
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-5 hover:bg-white/15 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold tracking-wider px-2 py-0.5 bg-sky-500/20 text-sky-300 rounded border border-sky-500/30">STEP 2</span>
+                <i data-lucide="message-square" class="w-5 h-5 text-sky-400"></i>
+              </div>
+              <h5 class="text-base font-bold text-white">情報の非同期化</h5>
+              <p class="text-xs font-medium text-sky-300">チャットツールによる脱・ムダ会議</p>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                「集まること」を前提にせず、連絡・共有・一次相談をチャットで完結。全員の時間を奪う定例会議を大幅削減します。
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300 flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-sky-400"></i>
+              推奨: Slack, Teams, Google Chat
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-5 hover:bg-white/15 transition flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold tracking-wider px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded border border-purple-500/30">STEP 3</span>
+                <i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i>
+              </div>
+              <h5 class="text-base font-bold text-white">定型業務の自動化</h5>
+              <p class="text-xs font-medium text-purple-300">生成AIによる脱・手作業</p>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                文章の推敲、要約、定型メール作成、データ整理を生成AIへ委譲。個人の精神論ではなくテクノロジーで時短を達成します。
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/10 text-[11px] text-slate-300 flex items-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5 text-purple-400"></i>
+              推奨: ChatGPT, Copilot, Zapier
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <footer class="mt-16 bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400 no-print">
+    <div class="max-w-6xl mx-auto px-4">
+      <p>© 2026 自社課題診断インタラクティブWebモックアップ (Antigravity Project)</p>
+      <p class="mt-1">脱・気合と根性 / 長時間労働からの脱却と業務仕組み化推進ツール</p>
+    </div>
+  </footer>
+
+  <!-- カスタムトースト通知（alert禁止要件対応） -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
+      <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+      <span id="toast-message" class="text-sm font-medium">通知メッセージ</span>
+    </div>
+  </div>
+
+  <script>
+    // 診断データ（全5カテゴリー・計20問）
+    const DIAGNOSTIC_DATA = [
+      {
+        category: "カテゴリー1：働き方・残業の実態（脱・気合と根性）",
+        shortName: "働き方・残業",
+        // カテゴリー1は課題の改善度（脱・根性論ができているか）を判定
+        questions: [
+          { text: "業務上の問題が発生した際、時間をかけることで解決するのではなく「新しい仕組み」を構築する文化がある。", id: "q1_1" },
+          { text: "経営層・管理職から残業削減が求められる際、具体的な業務削減の施策があり、現場に諦めが蔓延していない。", id: "q1_2" },
+          { text: "長時間労働による頑張りではなく、効率的なやり方や生産性の高い工夫が高く評価されている。", id: "q1_3" },
+          { text: "適正な人員配置がされており、現場の「気合と根性」による無理な調整に依存していない。", id: "q1_4" }
+        ]
+      },
+      {
+        category: "カテゴリー2：業務の見える化とタスク管理（脱・属人化）",
+        shortName: "見える化・タスク",
+        questions: [
+          { text: "誰が何の業務をどの程度抱えているか、マネージャーがグループウェア等でリアルタイムに把握できている。", id: "q2_1" },
+          { text: "「その担当者がいないと内容が分からない」といった属人化した業務（情報サイロ）が放置されず、標準化されている。", id: "q2_2" },
+          { text: "プロジェクトの進捗管理やタスクの割り振りに、デジタルツールを活用してチーム全体で共有できている。", id: "q2_3" },
+          { text: "業務の優先順位が可視化されており、個人の判断ではなく組織としての優先度に基づき動けている。", id: "q2_4" }
+        ]
+      },
+      {
+        category: "カテゴリー3：コミュニケーションと情報共有（脱・ムダ会議）",
+        shortName: "情報共有・会議",
+        questions: [
+          { text: "ちょっとした確認や報告のために、わざわざ全員の時間を奪う「対面・オンライン会議」を設定せずに済んでいる。", id: "q3_1" },
+          { text: "チャットツール等を活用し、相手がその場にいなくても情報が伝わる「非同期」なコミュニケーションが定着している。", id: "q3_2" },
+          { text: "重要な情報が「個人のメールボックス」や「口頭」に埋没せず、共有のデジタルスペースで誰でも検索・閲覧できるよう整理されている。", id: "q3_3" },
+          { text: "「同時刻に全員が集まること」自体が目的化し、本来不要な拘束時間が発生していない。", id: "q3_4" }
+        ]
+      },
+      {
+        category: "カテゴリー4：定型業務の実態（脱・手作業）",
+        shortName: "定型業務・手作業",
+        questions: [
+          { text: "毎日・毎週繰り返される単純なデータ入力や転記、集計作業を、手作業ではなくシステムやマクロ等で効率化できている。", id: "q4_1" },
+          { text: "生成AIなどの最新テクノロジーを、日々の下書き作成や事務作業を効率化する具体的な手段として試す文化がある。", id: "q4_2" },
+          { text: "「今までこのやり方だったから」という慣習的な理由だけで、付加価値を生まない工程が漫然と継続されていない。", id: "q4_3" },
+          { text: "ヒューマンエラーが発生した際、個人の注意力を促す精神論ではなく、システムによる自動化やチェック機能の導入を優先できている。", id: "q4_4" }
+        ]
+      },
+      {
+        category: "カテゴリー5：リスキリングとITへの意識（現場の意識変革）",
+        shortName: "リスキリング・意識",
+        questions: [
+          { text: "「デジタル化＝難しいプログラミングを覚えること」という誤解による、現場の心理的な拒絶反応が解消されている。", id: "q5_1" },
+          { text: "「全員がプログラマーになる必要はなく、便利なツールを使いこなすだけで生産性は上がる」という共通認識がある。", id: "q5_2" },
+          { text: "会社として、既存業務をデジタルへ置き換えるための再教育（リスキリング）の機会や学習時間を確保できている。", id: "q5_3" },
+          { text: "ITリテラシーになじみのない層に対し、否定から入るのではなく、段階的に「便利さ」を実感させるサポート体制がある。", id: "q5_4" }
+        ]
+      }
+    ];
+
+    // 回答状態の保持 (設問ID -> スコア 0, 1, 2)
+    const state = {
+      answers: {},
+      chartInstance: null
+    };
+
+    const TOTAL_QUESTIONS = 20;
+
+    // トースト通知表示関数
+    function showToast(message, iconName = "check-circle", colorClass = "text-emerald-400") {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toast-message');
+      const icon = document.getElementById('toast-icon');
+
+      msg.textContent = message;
+      icon.setAttribute('data-lucide', iconName);
+      icon.className = `w-5 h-5 ${colorClass}`;
+      
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // 設問一覧を動的レンダリング
+    function renderQuestions() {
+      const container = document.getElementById('questions-container');
+      container.innerHTML = '';
+
+      let globalIndex = 1;
+
+      DIAGNOSTIC_DATA.forEach((cat, catIdx) => {
+        const catCard = document.createElement('div');
+        catCard.className = 'bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-sm space-y-6';
+
+        // カテゴリー見出し
+        const header = document.createElement('div');
+        header.className = 'flex items-center gap-3 pb-4 border-b border-slate-100';
+        header.innerHTML = `
+          <div class="w-8 h-8 rounded-xl bg-brand-50 text-brand-600 font-bold flex items-center justify-center text-sm border border-brand-100">
+            ${catIdx + 1}
+          </div>
+          <div>
+            <h4 class="font-bold text-base sm:text-lg text-slate-900">${cat.category}</h4>
+            <p class="text-xs text-slate-400 mt-0.5">4設問 / 配点: 各最大2点</p>
+          </div>
+        `;
+        catCard.appendChild(header);
+
+        // 設問群
+        const qList = document.createElement('div');
+        qList.className = 'space-y-6';
+
+        cat.questions.forEach((q) => {
+          const qBox = document.createElement('div');
+          qBox.className = 'p-4 rounded-2xl bg-slate-50/70 border border-slate-100 space-y-3';
+          
+          qBox.innerHTML = `
+            <div class="flex items-start gap-3">
+              <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded mt-0.5">
+                Q${globalIndex}
+              </span>
+              <p class="text-sm font-medium text-slate-800 leading-relaxed flex-1">
+                ${q.text}
+              </p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+              <button type="button" data-qid="${q.id}" data-val="2" 
+                class="option-btn q-opt-${q.id} flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 focus:outline-none">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+                <span>できている (2点)</span>
+              </button>
+
+              <button type="button" data-qid="${q.id}" data-val="1" 
+                class="option-btn q-opt-${q.id} flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 focus:outline-none">
+                <i data-lucide="minus-circle" class="w-4 h-4 text-amber-500"></i>
+                <span>あまりできていない (1点)</span>
+              </button>
+
+              <button type="button" data-qid="${q.id}" data-val="0" 
+                class="option-btn q-opt-${q.id} flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 focus:outline-none">
+                <i data-lucide="x-circle" class="w-4 h-4 text-rose-500"></i>
+                <span>できていない (0点)</span>
+              </button>
+            </div>
+          `;
+
+          qList.appendChild(qBox);
+          globalIndex++;
+        });
+
+        catCard.appendChild(qList);
+        container.appendChild(catCard);
+      });
+
+      // アイコン再初期化
+      lucide.createIcons();
+      attachOptionListeners();
+    }
+
+    // 選択肢のクリックイベント
+    function attachOptionListeners() {
+      const optionButtons = document.querySelectorAll('.option-btn');
+      optionButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qid = btn.getAttribute('data-qid');
+          const val = parseInt(btn.getAttribute('data-val'), 10);
+
+          setAnswer(qid, val);
+          updateUI();
+        });
+      });
+    }
+
+    // 回答セットとボタンスタイルの反映
+    function setAnswer(qid, val) {
+      state.answers[qid] = val;
+
+      const groupButtons = document.querySelectorAll(`.q-opt-${qid}`);
+      groupButtons.forEach(b => {
+        const bVal = parseInt(b.getAttribute('data-val'), 10);
+        if (bVal === val) {
+          b.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+          if (val === 2) {
+            b.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600', 'shadow-sm');
+            b.querySelector('svg')?.classList.remove('text-emerald-500');
+            b.querySelector('svg')?.classList.add('text-white');
+          } else if (val === 1) {
+            b.classList.add('bg-amber-500', 'text-white', 'border-amber-500', 'shadow-sm');
+            b.querySelector('svg')?.classList.remove('text-amber-500');
+            b.querySelector('svg')?.classList.add('text-white');
+          } else {
+            b.classList.add('bg-rose-600', 'text-white', 'border-rose-600', 'shadow-sm');
+            b.querySelector('svg')?.classList.remove('text-rose-500');
+            b.querySelector('svg')?.classList.add('text-white');
+          }
+        } else {
+          // 非選択時リセット
+          b.className = `option-btn q-opt-${qid} flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none`;
+          const icon = b.querySelector('svg');
+          if (icon) {
+            icon.className = bVal === 2 ? 'w-4 h-4 text-emerald-500' : (bVal === 1 ? 'w-4 h-4 text-amber-500' : 'w-4 h-4 text-rose-500');
+          }
+        }
+      });
+    }
+
+    // スコア計算・統計情報算出
+    function calculateResults() {
+      let rawTotal = 0;
+      const categoryScores = [0, 0, 0, 0, 0];
+      const categoryMax = [8, 8, 8, 8, 8]; // 各4問 × 2点 = 8点
+
+      const bottlenecks = [];
+
+      DIAGNOSTIC_DATA.forEach((cat, cIdx) => {
+        cat.questions.forEach(q => {
+          const score = state.answers[q.id];
+          if (score !== undefined) {
+            rawTotal += score;
+            categoryScores[cIdx] += score;
+
+            // ボトルネック抽出 (0点)
+            if (score === 0) {
+              bottlenecks.push({
+                categoryName: cat.category,
+                text: q.text
+              });
+            }
+          }
+        });
+      });
+
+      // 100点換算 (rawTotal最大40点 -> 100点: × 2.5)
+      const scaledScore = Math.round(rawTotal * 2.5);
+
+      // カテゴリー別パーセンテージ (0〜100%)
+      const categoryPercentages = categoryScores.map((score, idx) => {
+        return Math.round((score / categoryMax[idx]) * 100);
+      });
+
+      // ランク判定
+      let rank = 'C';
+      let rankTitle = '精神論依存の緊急改善エリア';
+      let rankBadgeClass = 'bg-rose-100 text-rose-700 border-rose-200';
+      let rankDesc = '業務が個人の「気合と根性」「長時間残業」に強く依存しており、限界状態にあります。まずは業務の見える化と定例会議の削減から即座に着手しましょう。';
+
+      if (scaledScore >= 85) {
+        rank = 'S';
+        rankTitle = '先進的「仕組み化」推進組織';
+        rankBadgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+        rankDesc = '属人化を排し、デジタルツールや仕組み化が高度に定着しています。今後は生成AI等の先端自動化を活用し、業界トップ水準の生産性を目指しましょう。';
+      } else if (scaledScore >= 70) {
+        rank = 'A';
+        rankTitle = '脱・根性論の標準組織';
+        rankBadgeClass = 'bg-blue-100 text-blue-700 border-blue-200';
+        rankDesc = '一定のツール導入やルール化が進んでいますが、一部で手作業や属人化が残っています。情報の非同期化や定型業務の自動化をさらに進めることで飛躍できます。';
+      } else if (scaledScore >= 50) {
+        rank = 'B';
+        rankTitle = '気合と根性の限界警戒領域';
+        rankBadgeClass = 'bg-amber-100 text-amber-700 border-amber-200';
+        rankDesc = '効率化の意識はあるものの、実態としては長時間の頑張りや特定の担当者への依存に頼っています。業務の標準化とカンバン管理の導入が急務です。';
+      }
+
+      return {
+        answeredCount: Object.keys(state.answers).length,
+        rawTotal,
+        scaledScore,
+        categoryPercentages,
+        rank,
+        rankTitle,
+        rankBadgeClass,
+        rankDesc,
+        bottlenecks
+      };
+    }
+
+    // 画面全体の再描画
+    function updateUI() {
+      const res = calculateResults();
+
+      // プログレスバー更新
+      const pct = Math.round((res.answeredCount / TOTAL_QUESTIONS) * 100);
+      document.getElementById('progress-text').textContent = `${res.answeredCount} / ${TOTAL_QUESTIONS} 完了 (${pct}%)`;
+      document.getElementById('progress-bar').style.width = `${pct}%`;
+
+      const jumpBtn = document.getElementById('btn-jump-result');
+      if (res.answeredCount > 0) {
+        jumpBtn.classList.remove('opacity-60', 'pointer-events-none');
+      } else {
+        jumpBtn.classList.add('opacity-60', 'pointer-events-none');
+      }
+
+      // スコア表示
+      document.getElementById('total-score').textContent = res.scaledScore;
+      
+      const badge = document.getElementById('rank-badge');
+      badge.textContent = `${res.rank} ランク`;
+      badge.className = `px-3 py-1 rounded-full text-xs font-bold border ${res.rankBadgeClass}`;
+
+      document.getElementById('rank-title').innerHTML = `
+        <span class="inline-block w-3 h-3 rounded-full ${res.rank === 'S' ? 'bg-emerald-500' : res.rank === 'A' ? 'bg-blue-500' : res.rank === 'B' ? 'bg-amber-500' : 'bg-rose-500'}"></span>
+        ${res.rank}ランク: ${res.rankTitle}
+      `;
+      document.getElementById('rank-desc').textContent = res.rankDesc;
+
+      // ボトルネックリスト更新
+      const bList = document.getElementById('bottleneck-list');
+      const bCount = document.getElementById('bottleneck-count');
+      bCount.textContent = `${res.bottlenecks.length} 項目`;
+
+      if (res.bottlenecks.length === 0) {
+        if (res.answeredCount === 0) {
+          bList.innerHTML = `<div class="text-center py-6 text-slate-400 text-sm">設問に回答すると、0点（できていない）の項目が自動抽出されます。</div>`;
+        } else {
+          bList.innerHTML = `
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-800">
+              <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600"></i>
+              <span class="text-sm font-semibold">現在、「できていない（0点）」の重大ボトルネック項目はありません。良好な状態です！</span>
+            </div>
+          `;
+        }
+      } else {
+        bList.innerHTML = '';
+        res.bottlenecks.forEach((b, idx) => {
+          const item = document.createElement('div');
+          item.className = 'p-3.5 bg-rose-50/70 border border-rose-100 rounded-2xl flex items-start gap-3';
+          item.innerHTML = `
+            <span class="bg-rose-600 text-white text-xs font-bold rounded-lg px-2 py-0.5 mt-0.5">課題 ${idx + 1}</span>
+            <div class="flex-1">
+              <div class="text-xs font-bold text-rose-800 mb-0.5">${b.categoryName}</div>
+              <p class="text-xs sm:text-sm text-slate-800 font-medium">${b.text}</p>
+            </div>
+          `;
+          bList.appendChild(item);
+        });
+      }
+
+      // レーダーチャート更新
+      updateRadarChart(res.categoryPercentages);
+      lucide.createIcons();
+    }
+
+    // レーダーチャート描画
+    function updateRadarChart(dataValues) {
+      const labels = DIAGNOSTIC_DATA.map(d => d.shortName);
+
+      if (!state.chartInstance) {
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        state.chartInstance = new Chart(ctx, {
+          type: 'radar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '達成度 (%)',
+              data: dataValues,
+              backgroundColor: 'rgba(2, 132, 199, 0.25)',
+              borderColor: '#0284c7',
+              borderWidth: 2.5,
+              pointBackgroundColor: '#0369a1',
+              pointBorderColor: '#ffffff',
+              pointHoverBackgroundColor: '#ffffff',
+              pointHoverBorderColor: '#0369a1',
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                min: 0,
+                max: 100,
+                ticks: {
+                  stepSize: 25,
+                  display: true,
+                  backdropColor: 'transparent',
+                  font: { size: 10 },
+                  color: '#94a3b8'
+                },
+                grid: {
+                  color: '#e2e8f0'
+                },
+                angleLines: {
+                  color: '#e2e8f0'
+                },
+                pointLabels: {
+                  font: {
+                    size: 11,
+                    weight: '600',
+                    family: "'Noto Sans JP', sans-serif"
+                  },
+                  color: '#334155'
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return ` 達成度: ${context.raw}%`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } else {
+        state.chartInstance.data.datasets[0].data = dataValues;
+        state.chartInstance.update();
+      }
+    }
+
+    // デモ用サンプル自動入力ボタン
+    document.getElementById('btn-demo').addEventListener('click', () => {
+      // リアルな現場課題を再現するサンプルデータセット (Bランク/Cランク混在)
+      const demoAnswers = {
+        // カテゴリー1: 気合と根性が残存
+        'q1_1': 1, 'q1_2': 0, 'q1_3': 1, 'q1_4': 0,
+        // カテゴリー2: 属人化が強く見える化不足
+        'q2_1': 1, 'q2_2': 0, 'q2_3': 1, 'q2_4': 1,
+        // カテゴリー3: 会議過多
+        'q3_1': 0, 'q3_2': 1, 'q3_3': 1, 'q3_4': 0,
+        // カテゴリー4: 手作業が蔓延
+        'q4_1': 0, 'q4_2': 1, 'q4_3': 0, 'q4_4': 1,
+        // カテゴリー5: 意識はあるがサポート不足
+        'q5_1': 1, 'q5_2': 2, 'q5_3': 0, 'q5_4': 1
+      };
+
+      Object.entries(demoAnswers).forEach(([qid, val]) => {
+        setAnswer(qid, val);
+      });
+
+      updateUI();
+      showToast('サンプル回答をセットしました。ダッシュボードに反映されました。', 'sparkles', 'text-amber-400');
+
+      // 結果セクションへスクロール
+      document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // リセットボタン
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      state.answers = {};
+      
+      // 全ボタンリセット
+      const allButtons = document.querySelectorAll('.option-btn');
+      allButtons.forEach(b => {
+        const qid = b.getAttribute('data-qid');
+        const bVal = parseInt(b.getAttribute('data-val'), 10);
+        b.className = `option-btn q-opt-${qid} flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none`;
+        const icon = b.querySelector('svg');
+        if (icon) {
+          icon.className = bVal === 2 ? 'w-4 h-4 text-emerald-500' : (bVal === 1 ? 'w-4 h-4 text-amber-500' : 'w-4 h-4 text-rose-500');
+        }
+      });
+
+      updateUI();
+      showToast('回答をすべてリセットしました。', 'rotate-ccw', 'text-slate-400');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // 診断結果算出ボタン
+    document.getElementById('btn-submit').addEventListener('click', () => {
+      updateUI();
+      showToast('診断結果を算出しました。', 'bar-chart-3', 'text-brand-400');
+      document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // 印刷・PDF保存
+    document.getElementById('btn-print').addEventListener('click', () => {
+      window.print();
+    });
+
+    // 初期実行
+    window.addEventListener('DOMContentLoaded', () => {
+      renderQuestions();
+      updateUI();
+    });
+  </script>
+</body>
+</html>
